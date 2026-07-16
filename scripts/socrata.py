@@ -19,9 +19,9 @@ from urllib.request import Request, urlopen
 
 UA = "nyc-sidewalk-sheds/2.0 (+https://github.com/joshgreenman1973/nyc-sidewalk-sheds)"
 
-# Socrata allows far higher throughput for requests carrying an app token, and
-# throttles anonymous traffic against a shared pool. Anonymous still works; it is
-# just the most likely reason a nightly run flakes.
+# Optional. Socrata throttles anonymous traffic by IP against a shared pool; a token
+# moves you to your own. At ~46 requests per build this has never been needed, so
+# anonymous is the normal case, not a degraded one.
 APP_TOKEN = os.environ.get("SOCRATA_APP_TOKEN", "").strip()
 
 MAX_ATTEMPTS = 5

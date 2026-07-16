@@ -35,8 +35,8 @@ jobs:
 
       - name: Build data
         env:
-          # Optional. Without it Socrata throttles anonymous traffic against a
-          # shared pool, which is the most likely cause of a flaky run.
+          # Optional and usually absent. A build is ~46 requests/day, which runs
+          # fine against Socrata's anonymous per-IP pool. See README.
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
           ALLOW_SWING: ${{ inputs.allow_swing && '1' || '' }}
         run: python3 scripts/build_data.py

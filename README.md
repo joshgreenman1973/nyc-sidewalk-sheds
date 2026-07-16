@@ -54,13 +54,25 @@ checks *derived* metrics, not just volume.
 Both can be run manually from the Actions tab. If a genuine jump in shed counts
 trips the swing guard, re-run `refresh.yml` with `allow_swing` checked.
 
-## The Socrata app token (optional but recommended)
+## The Socrata app token (optional, and probably unnecessary)
 
-Without a token, Socrata throttles anonymous traffic against a shared pool — the
-likeliest cause of a flaky nightly run. The build works without one; it just has
-a worse night sometimes.
+**You almost certainly don't need one.** A full build makes roughly **46 requests**,
+once a day. Socrata throttles anonymous traffic [by IP address][tokens] against a
+shared pool, and 46 requests/day is nowhere near any plausible limit — the build has
+run anonymously without a single throttle.
 
-To add it (free, ~2 minutes):
+The one theoretical argument for a token: GitHub Actions runners share IP addresses
+with a lot of other CI traffic, and the anonymous pool is per-IP, so in principle
+someone else's requests could crowd ours. That is an inference, not something
+observed here, and the retry logic (5 attempts, ≥30s backoff on a 429) should absorb
+it anyway. If throttling ever does bite, the staleness watchdog will file an issue
+and the run log will show the 429s.
+
+So: add a token if that happens, not before.
+
+[tokens]: https://dev.socrata.com/docs/app-tokens
+
+If you do want one (free, ~2 minutes) — take the **App Token**, not the Secret Token:
 
 1. Sign up at https://data.cityofnewyork.us/profile/edit/developer_settings and
    create an app token.
