@@ -27,6 +27,9 @@ APP_TOKEN = os.environ.get("SOCRATA_APP_TOKEN", "").strip()
 MAX_ATTEMPTS = 5
 BASE_BACKOFF = 2.0
 TIMEOUT = 180
+# 403 is in here deliberately — Socrata reports anonymous throttling as a 403
+# "authentication_required", not a 429. See the handler in fetch_json.
+RETRY_CODES = {403, 429}
 
 
 def has_token() -> bool:
@@ -57,12 +60,17 @@ def fetch_json(url: str, *, what: str = "request"):
                 return json.loads(r.read())
         except HTTPError as e:
             last = e
-            # 429 = throttled, 5xx = transient upstream. Both are worth retrying.
-            # 4xx other than 429 means a malformed query; retrying cannot help.
-            if e.code != 429 and 400 <= e.code < 500:
+            # 429 and 5xx are the obvious retries. 403 is the subtle one: when the
+            # anonymous per-IP pool is exhausted, Socrata does not send 429 — it sends
+            # 403 "This request must be authenticated or have an application token".
+            # That reads like a permissions error but is really throttling, and it
+            # clears on its own. Treating it as fatal would abort a whole nightly run
+            # over a transient blip. A genuine auth error just retries and then fails
+            # with the body text, which is a fine trade.
+            if e.code not in RETRY_CODES and 400 <= e.code < 500:
                 raise SocrataError(f"{what}: HTTP {e.code} (query error, not retrying): {url}") from e
             wait = BASE_BACKOFF * (2 ** (attempt - 1))
-            if e.code == 429:
+            if e.code in (429, 403):
                 wait = max(wait, 30)
             print(f"  [{what}] HTTP {e.code}, attempt {attempt}/{MAX_ATTEMPTS}, sleeping {wait:.0f}s", file=sys.stderr)
         except (URLError, TimeoutError, json.JSONDecodeError, OSError) as e:
