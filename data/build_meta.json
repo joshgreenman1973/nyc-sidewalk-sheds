@@ -1,7 +1,7 @@
 {
-  "built_at": "2026-07-16T15:39:55+00:00",
-  "build_seconds": 116.4,
-  "used_app_token": false,
+  "built_at": "2026-07-16T15:54:47+00:00",
+  "build_seconds": 140.8,
+  "used_app_token": true,
   "source_rows": {
     "active_permits": 8478,
     "shed_history": 106212,
