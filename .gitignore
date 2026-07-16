@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+# Atomic writes land here first; a crash mid-write can leave one behind.
+data/*.tmp

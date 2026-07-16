@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NYC sidewalk sheds — interactive tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="embed">
+  <header class="hero">
+    <div class="hero-text">
+      <div class="hero-eyebrow">Data tool · NYC infrastructure</div>
+      <div class="hero-title">The sidewalk shed tracker</div>
+      <div class="hero-tag">Every active shed permitted by the New York City Department of Buildings, joined to Local Law 11 facade compliance, building-distress signals and 311 complaints.</div>
+    </div>
+    <div class="hero-actions">
+      <span class="hero-asof">Updated <strong id="s-asof2">—</strong></span>
+      <a class="hero-cta" id="btn-open-full" href="?" target="_blank" rel="noopener" hidden>Open full version &rarr;</a>
+      <button class="iconbtn icon-fs" id="btn-fullscreen-2" title="Toggle full screen" aria-label="Toggle full screen">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5V2h3M9 2h3v3M12 9v3H9M5 12H2V9"/></svg>
+      </button>
+      <button class="iconbtn" id="btn-embed-2" title="Copy embed code" aria-label="Copy embed code">&lt;/&gt;</button>
+    </div>
+  </header>
+
+  <header class="topbar">
+    <div class="stat">
+      <span class="num" id="s-total">—</span>
+      <span class="lbl">active sheds</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="s-median">—</span>
+      <span class="lbl">median days up</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="s-1y">—</span>
+      <span class="lbl">up over 1 year</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="s-5y">—</span>
+      <span class="lbl">up over 5 years</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="s-zombie">—</span>
+      <span class="lbl">zombie sheds</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="s-unsafe">—</span>
+      <span class="lbl">unsafe facade filings</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="s-distress">—</span>
+      <span class="lbl">distressed buildings</span>
+    </div>
+    <div class="stat asof">
+      <span class="num" id="s-asof">—</span>
+      <span class="lbl">data as of</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="map" role="tab">Map</button>
+    <button class="tab" data-view="findings" role="tab">Findings</button>
+    <button class="tab" data-view="myblock" role="tab">Search by address</button>
+    <button class="tab" data-view="zombies" role="tab">Top sheds</button>
+    <button class="tab" data-view="neighborhoods" role="tab">By neighborhood</button>
+    <button class="tab" data-view="council" role="tab">Council districts</button>
+    <button class="tab" data-view="trend" role="tab">Trend over time</button>
+    <a class="meth" href="methodology.html" target="_blank" rel="noopener">Methodology</a>
+  </nav>
+
+  <div class="modal" id="embed-modal" hidden>
+    <div class="modal-card">
+      <h3>Embed this in your story</h3>
+      <p>Paste into a Ghost <strong>HTML card</strong> (press <code>/</code> in the editor and choose HTML). The embed shows a compact map with key stats; readers can click "Open full version" to access tabs, filters, scorecards, and the time machine.</p>
+      <textarea readonly id="embed-code"></textarea>
+      <div class="modal-actions">
+        <button id="embed-copy">Copy</button>
+        <button id="embed-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="presets" id="presets">
+    <span class="presets-label">Start with a question:</span>
+    <button class="preset" data-preset="zombies">Why is this still up? <small>(zombies)</small></button>
+    <button class="preset" data-preset="safe-shedded">Safe but still shedded</button>
+    <button class="preset" data-preset="distressed-long">Distressed buildings, sheds &gt;5 years</button>
+    <button class="preset" data-preset="chronic">Where complaints repeat</button>
+    <button class="preset" data-preset="oldest">The oldest sheds</button>
+    <button class="preset" data-preset="timewarp">▶ Replay 2010 → today</button>
+    <button class="preset clear" data-preset="reset">Clear all</button>
+  </section>
+
+  <!-- Neutral until the data loads. This previously hard-coded a shed count, which
+       meant a failed load left a stale number sitting on the page as if it were live. -->
+  <p class="now-showing" id="now-showing">Loading shed data…</p>
+
+  <section class="timewarp" id="timewarp" hidden>
+    <button class="tw-play" id="tw-play" aria-label="Play">▶</button>
+    <input type="range" id="tw-slider" min="0" max="0" value="0" step="1">
+    <div class="tw-readout">
+      <strong id="tw-month">—</strong>
+      <span id="tw-counts" class="tw-counts">—</span>
+    </div>
+    <button class="tw-close" id="tw-close" aria-label="Close">×</button>
+  </section>
+
+  <section class="filters" id="filters">
+    <label>Borough
+      <select id="f-boro">
+        <option value="">All</option>
+        <option>Manhattan</option><option>Brooklyn</option><option>Queens</option>
+        <option>Bronx</option><option>Staten Island</option>
+      </select>
+    </label>
+    <label>Community district
+      <select id="f-cd">
+        <option value="">All</option>
+      </select>
+    </label>
+    <label>Neighborhood
+      <input list="nta-list" id="f-nta" placeholder="e.g. Hamilton Heights" autocomplete="off">
+      <datalist id="nta-list"></datalist>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="f-zombie"> Zombie sheds only
+    </label>
+    <input type="hidden" id="f-dur" value="">
+    <input type="checkbox" id="f-311" style="display:none">
+    <input type="checkbox" id="f-chronic" style="display:none">
+    <label class="search">Address or owner
+      <input type="search" id="f-q" placeholder="e.g. Broadway, NYCHA">
+    </label>
+    <span class="count" id="f-count"></span>
+    <button class="reset" id="f-reset">Reset</button>
+  </section>
+
+  <main>
+    <section class="view view-map active" id="view-map">
+      <div id="map"></div>
+      <div class="map-search">
+        <label for="map-nta">🔎 Find a neighborhood</label>
+        <input list="nta-list" id="map-nta" placeholder="Type to search 206 NYC neighborhoods…" autocomplete="off">
+      </div>
+
+      <aside class="legend" id="legend">
+        <strong>Days up — click to filter</strong>
+        <button class="leg-btn" data-bucket="0-90"><i style="background:#57aa4a;width:5px;height:5px"></i>Under 90 days</button>
+        <button class="leg-btn" data-bucket="90-365"><i style="background:#dde44c;width:7px;height:7px"></i>90 – 365 days</button>
+        <button class="leg-btn" data-bucket="365-1095"><i style="background:#ff7c53;width:9px;height:9px"></i>1 – 3 years</button>
+        <button class="leg-btn" data-bucket="1095-1825"><i style="background:#e7466d;width:12px;height:12px"></i>3 – 5 years</button>
+        <button class="leg-btn" data-bucket="1825-99999"><i style="background:#d2232a;width:15px;height:15px"></i>Over 5 years</button>
+        <span class="leg-size-note">Color and size both scale with age.</span>
+        <hr>
+        <strong>Facade status (Local Law 11)</strong>
+        <button class="leg-btn" data-fisp="UNSAFE"><i style="background:#d2232a;border-radius:0"></i>Unsafe filing</button>
+        <button class="leg-btn" data-fisp="SWARMP"><i style="background:#ff7c53;border-radius:0"></i><abbr title="Safe With A Repair And Maintenance Program — facade is OK now but needs work before the next cycle">SWARMP</abbr> (needs repair)</button>
+        <button class="leg-btn" data-fisp="SAFE"><i style="background:#57aa4a;border-radius:0"></i>Safe</button>
+        <button class="leg-btn" data-fisp="NONE"><i style="background:#9b9fbc;border-radius:0"></i>No filing</button>
+        <hr>
+        <hr>
+        <strong>Building condition</strong>
+        <button class="leg-btn" data-flag="distress"><i style="background:#e7466d;border-radius:0"></i>Distressed buildings (<abbr title="New York City Department of Housing Preservation and Development">HPD</abbr>/<abbr title="Alternative Enforcement Program — HPD's distressed-building list">AEP</abbr>)</button>
+        <button class="leg-btn" data-flag="aep"><i style="background:#7d1027;border-radius:0"></i><abbr title="New York City Department of Housing Preservation and Development">HPD</abbr> <abbr title="Alternative Enforcement Program — HPD's distressed-building list">AEP</abbr> enrolled</button>
+        <hr>
+        <button class="leg-btn" data-toggle="311"><i style="background:#217ebe"></i>311 complaints (past 12 months)</button>
+        <button class="leg-btn" data-toggle="chronic"><i style="background:#0a4f80;width:14px;height:14px"></i>Chronic sites only (2+)</button>
+      </aside>
+    </section>
+
+    <section class="view view-zombies" id="view-zombies">
+      <p class="caption">Top 200 active sheds. Click any column header to sort. Toggle "Zombies only" or filter by borough above. Click a row to find that shed on the map.</p>
+      <div class="table-wrap">
+        <table id="zombie-table" class="sortable">
+          <thead><tr>
+            <th data-key="days" data-type="num" class="sorted-desc">Days up</th>
+            <th data-key="addr" data-type="str">Address</th>
+            <th data-key="boro" data-type="str">Borough</th>
+            <th data-key="owner" data-type="str">Owner (per PLUTO)</th>
+            <th data-key="yrbuilt" data-type="num">Year built</th>
+            <th data-key="zombie" data-type="num">Zombie?</th>
+            <th data-key="fisp" data-type="str">Facade status</th>
+            <th data-key="distress" data-type="num">Distress score</th>
+            <th data-key="complaints" data-type="num">311 complaints (past year)</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view view-myblock" id="view-myblock">
+      <div class="myblock-search">
+        <label for="addr-input">Enter any NYC address</label>
+        <div class="addr-row">
+          <input id="addr-input" placeholder="e.g. 79 Manhattan Ave, Brooklyn or 350 5th Ave" autocomplete="off" autocapitalize="words">
+          <button id="addr-go" class="addr-btn">Find sheds near here</button>
+        </div>
+        <p class="addr-hint">Returns active DOB-permitted sidewalk sheds within a quarter-mile radius, ranked by distance.</p>
+      </div>
+      <div id="addr-results" class="addr-results" hidden></div>
+    </section>
+
+    <section class="view view-findings" id="view-findings">
+      <p class="caption">What the data shows. Each finding links to the map filtered to those sheds. Numbers update nightly.</p>
+      <div id="findings-grid"></div>
+    </section>
+
+    <section class="view view-council" id="view-council">
+      <p class="caption">All 51 NYC City Council districts ranked by total shed-days. Click any row to zoom the map to that district. Click any column header to sort.</p>
+      <div class="table-wrap">
+        <table id="council-table" class="sortable">
+          <thead><tr>
+            <th data-key="cdist" data-type="num">District</th>
+            <th data-key="sheds" data-type="num">Active sheds</th>
+            <th data-key="shed_days" data-type="num" class="sorted-desc">Total shed-days</th>
+            <th data-key="median_days" data-type="num">Median days</th>
+            <th data-key="over_5y" data-type="num">Sheds &gt;5 yr</th>
+            <th data-key="zombies" data-type="num">Zombies</th>
+            <th data-key="unsafe" data-type="num">Unsafe filings</th>
+            <th data-key="distressed" data-type="num">Distressed</th>
+            <th data-key="complaints" data-type="num">311 complaints (yr)</th>
+            <th data-key="worst_days" data-type="num">Worst shed</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view view-trend" id="view-trend">
+      <p class="caption">Active sheds and median days-up by month, since the DOB NOW permit system launched in 2018. (Pre-2018 is sparse because legacy permits don't reliably carry building IDs.)</p>
+      <div class="trend-grid">
+        <div class="trend-stat">
+          <div class="trend-num" id="t-now">—</div>
+          <div class="trend-lbl">active sheds today</div>
+          <div class="trend-delta" id="t-delta-count"></div>
+        </div>
+        <div class="trend-stat">
+          <div class="trend-num" id="t-med">—</div>
+          <div class="trend-lbl">median days up</div>
+          <div class="trend-delta" id="t-delta-med"></div>
+        </div>
+      </div>
+      <div class="chart-block">
+        <h3>Active sheds, by month</h3>
+        <svg id="chart-count" viewBox="0 0 800 200" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="chart-block">
+        <h3>Median days a shed has been up, by month</h3>
+        <svg id="chart-med" viewBox="0 0 800 200" preserveAspectRatio="none"></svg>
+      </div>
+    </section>
+
+    <section class="view view-neighborhoods" id="view-neighborhoods">
+      <p class="caption">Community districts ranked by total shed-days (sum of days each active shed has been up). Click a row to filter the map. Click any column header to sort.</p>
+      <div class="table-wrap">
+        <table id="cd-table" class="sortable">
+          <thead><tr>
+            <th data-key="cd" data-type="str">Community district</th>
+            <th data-key="sheds" data-type="num">Active sheds</th>
+            <th data-key="shed_days" data-type="num" class="sorted-desc">Total shed-days</th>
+            <th data-key="zombies" data-type="num">Zombies</th>
+            <th data-key="avg" data-type="num">Avg days/shed</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="src">
+    Source: NYC Open Data (DOB NOW: Build approved permits, DOB legacy permit issuance, DOB NOW job filings, PLUTO). Updated nightly.
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

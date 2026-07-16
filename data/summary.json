@@ -1,0 +1,21 @@
+{
+  "as_of": "2026-07-16",
+  "total_active": 7125,
+  "longest_days": 7021,
+  "over_10y": 46,
+  "over_5y": 460,
+  "over_3y": 1165,
+  "over_1y": 3352,
+  "median_days": 339,
+  "zombies": 432,
+  "complaints_12mo": 146,
+  "chronic_sites": 9,
+  "fisp_unsafe": 1170,
+  "fisp_swarmp": 956,
+  "fisp_safe": 421,
+  "fisp_no_filing": 4135,
+  "with_open_hpd": 3235,
+  "with_open_class_c": 2546,
+  "in_aep": 163,
+  "high_distress": 2192
+}
