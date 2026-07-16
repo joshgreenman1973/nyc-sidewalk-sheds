@@ -74,7 +74,7 @@
 <h2>How we keep the numbers honest</h2>
 <p>The build refuses to publish data that fails a set of sanity checks: shed counts outside a plausible range, coordinates outside the city, missing boroughs, duplicate buildings, contradictory flags, or a day-over-day swing greater than 35 percent. When a check fails, nothing is written and the previous data stays up. A stale number we can explain is better than a fresh one we can't.</p>
 <p>Those checks test the <em>derived</em> figures, not just the row counts, for a specific reason. This tracker's predecessor filtered DOB job filings on <code>shed='0'</code>. DOB later changed that field's encoding to <code>'YES'</code>/<code>'NO'</code>, so the filter matched nothing. Because zombie detection works by finding buildings <em>with</em> recent work, matching nothing meant every long-standing shed was flagged a zombie — roughly a fivefold overcount. The total shed count stayed perfectly correct throughout, so a check that only counted rows would never have caught it.</p>
-<p>If you are comparing against the earlier version of this map: its data stopped updating in April 2026, and its zombie count should be treated with caution for the reason above.</p>
+<p>If you are comparing against the earlier version of this map: its data stopped updating on April 27, 2026, so its figures are stale rather than wrong. Its final zombie count (447) is consistent with what this build produces today (432), which tells us the encoding change landed after that data froze — the freeze is what kept the bug from showing up there.</p>
 
 <h2>What this tracker does <em>not</em> do</h2>
 <ul>
