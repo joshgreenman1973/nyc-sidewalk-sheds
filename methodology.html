@@ -30,6 +30,7 @@
   <li>Permit expiration date is on or after today.</li>
 </ul>
 <p>Permits are filed and renewed under unique permit numbers, but the shed itself is a continuous physical structure tied to a building. We aggregate by Building Identification Number (BIN). Where multiple active permits exist for the same BIN we keep the most-recently-issued one for attribution but compute the start date from the full permit history at that building (see below).</p>
+<div class="caveat"><strong>Why our count is lower than DOB's dashboard.</strong> The Department of Buildings' own <a href="https://www.nyc.gov/site/buildings/about/sidewalk-shed-map.page">Active Sidewalk Shed Permits map</a> reports a higher number — about 7,520 on the day this was written, versus roughly 7,150 here. Both draw from the same DOB NOW permit data; the difference is what each counts as one shed. DOB counts <em>permit filings</em>: a building carrying two or three active shed filings at once is counted two or three times. We count <em>buildings</em>: one shedded building is one shed. On the same day the raw feed held 8,533 active permit rows, 7,516 distinct permit filings (matching DOB) and 7,151 distinct buildings (matching us). We use the building count because it answers the question most people are actually asking — how many buildings are living under a shed — and because it avoids double-counting a single physical structure.</div>
 
 <h2>How "days up" is calculated</h2>
 <p>For each Building Identification Number (BIN) with an active shed permit, we pull every shed permit ever filed at that BIN from both DOB NOW (2018+) and the legacy DOB Permit Issuance dataset (1991–2020), sort by issuance date, and walk forward looking for a contiguous run.</p>
@@ -86,7 +87,7 @@
 
 <h2>Numbers in the headline strip</h2>
 <ul>
-  <li><strong>Active sheds.</strong> Distinct buildings with at least one active shed permit.</li>
+  <li><strong>Active sheds.</strong> Distinct buildings with at least one active shed permit — not permit filings, which is why this runs a few hundred below DOB's dashboard (see above).</li>
   <li><strong>Median days up.</strong> Median across all active sheds of the days-up calculation above.</li>
   <li><strong>Up over 1 year / 5 years.</strong> Counts of buildings whose current shed run started 365 / 1,825 days ago or more.</li>
   <li><strong>Zombie sheds.</strong> Active sheds meeting the zombie definition above.</li>
