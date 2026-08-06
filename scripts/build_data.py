@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import tempfile
 import time
@@ -71,6 +72,28 @@ def parse_dt(s):
         return datetime.strptime(s.split(" ")[0], "%m/%d/%Y").date()
     except Exception:
         return None
+
+
+def fisp_int(value, counter=None):
+    """Parse a FISP cycle / sequence number that DOB may have typo'd.
+
+    These two columns are only ever used to sort a building's filings so we
+    can keep the most recent one. DOB hand-keys them, and at least one row
+    carries 'O4' -- a letter O for a zero -- which used to abort the whole
+    build. Salvage the digits, and count what we salvaged so a rising number
+    shows up in the log rather than passing silently.
+    """
+    s = str(value or "").strip()
+    try:
+        return int(s or 0)
+    except ValueError:
+        pass
+    if counter is not None:
+        counter.append(s)
+    # Read the letters a keyer most plausibly meant as digits, then drop the
+    # rest. 'O4' is cycle 4, not cycle 0.
+    digits = re.sub(r"\D", "", s.translate(str.maketrans("OoIilSs", "0011155")))
+    return int(digits) if digits else 0
 
 
 def build_runs(permit_dates):
@@ -188,16 +211,24 @@ def main() -> int:
     # 7. FISP (Local Law 11) facade filings for our BINs.
     log(f"[7/8] FISP filings for {len(active_bins):,} BINs...")
     fisp_by_bin = {}
+    malformed = []
+
+    def fisp_key(row):
+        return (fisp_int(row.get("cycle"), malformed),
+                fisp_int(row.get("sequence_no"), malformed))
+
     for row in socrata.fetch_in_chunks(
         "xubg-57si", "bin", active_bins,
         select="bin,cycle,current_status,filing_status,sequence_no",
         what="FISP",
     ):
         b = str(row.get("bin"))
-        key = (int(row.get("cycle") or 0), int(row.get("sequence_no") or 0))
         cur = fisp_by_bin.get(b)
-        if cur is None or key > (int(cur.get("cycle") or 0), int(cur.get("sequence_no") or 0)):
+        if cur is None or fisp_key(row) > fisp_key(cur):
             fisp_by_bin[b] = row
+    if malformed:
+        log(f"  non-numeric cycle/sequence values salvaged: {len(malformed)} "
+            f"({', '.join(sorted(set(malformed))[:5])})")
     log(f"  BINs with a FISP record: {len(fisp_by_bin):,}")
 
     # 8. Recent non-shed job filings => the building is actually being worked on.
