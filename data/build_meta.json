@@ -1,15 +1,15 @@
 {
-  "built_at": "2026-08-22T07:33:11+00:00",
-  "build_seconds": 205.4,
+  "built_at": "2026-08-23T07:34:22+00:00",
+  "build_seconds": 245.7,
   "used_app_token": true,
   "source_rows": {
-    "active_permits": 8572,
-    "shed_history": 108711,
+    "active_permits": 8593,
+    "shed_history": 108753,
     "legacy_permits": 179863,
-    "pluto_bbls": 6334,
-    "fisp_bins": 3094,
+    "pluto_bbls": 6342,
+    "fisp_bins": 3097,
     "aep_bins": 3653,
-    "recent_job_bins": 66380,
+    "recent_job_bins": 66390,
     "complaints_311": 142
   }
 }
