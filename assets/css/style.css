@@ -948,4 +948,5 @@ td.dim { color: var(--ink-soft); }
   .stat:nth-child(n+5) { border-bottom: none; }
   .tabs { overflow-x: auto; }
   .meth { display: none; }
+  .hero { flex-wrap: wrap; }
 }
