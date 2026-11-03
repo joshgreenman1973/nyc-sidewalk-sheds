@@ -12,8 +12,7 @@ serve stale numbers.
 ## Why this version exists
 
 This is a rebuild of an earlier tracker whose updates had stopped working. Two
-things were wrong, and both are worth stating plainly because they shaped the
-design here:
+things were wrong, and both shaped the design here:
 
 1. **The nightly refresh never existed.** The original README described a nightly
    GitHub Actions workflow "applied separately because the initial push token
@@ -21,16 +20,16 @@ design here:
    `.github/workflows` directory, so nothing ever ran and the published data sat
    frozen for roughly three months.
 
-2. **An upstream schema change silently corrupted the zombie count.** DOB's job
-   filings dataset (`w9ak-ipjd`) encodes its `shed` flag as `'YES'`/`'NO'`; it
+2. **An upstream schema change silently corrupted the zombie count.** The
+   Department of Buildings (DOB) job filings dataset (`w9ak-ipjd`) encodes its `shed` flag as `'YES'`/`'NO'`; it
    previously used `'1'`/`'0'`. The build filtered on `shed='0'`, which after the
    change matched *zero* rows. Zombie detection works by finding buildings *with*
    recent non-shed work, so matching nothing meant every long-standing shed got
    flagged a zombie — inflating the count roughly fivefold. Nothing errored.
 
-The second one is the more instructive failure: the shed count stayed correct, so
-any check that only counted rows would have passed it. That is why validation here
-checks *derived* metrics, not just volume.
+In the second failure the shed count stayed correct, so any check that only
+counted rows would have passed it. That is why validation here also checks
+*derived* metrics.
 
 ## How it works
 
@@ -41,7 +40,7 @@ checks *derived* metrics, not just volume.
   version retried only its main fetch, so a blip on any of the chunked PLUTO/FISP
   loops aborted the whole run.
 - `scripts/validate.py` gates publication. If the data fails a sanity check,
-  **nothing is written** — a stale-but-correct site beats a fresh-but-wrong one.
+  **nothing is written** and the site keeps its last good data.
 - `index.html` + `assets/` is a static site. Leaflet, vanilla JS, no build step.
 
 ### The automation
@@ -51,7 +50,7 @@ checks *derived* metrics, not just volume.
 | `refresh.yml` | 07:20 UTC daily | Rebuilds data, commits only if something changed |
 | `staleness-check.yml` | 13:45 UTC daily | Opens an issue if published data is >3 days old |
 
-Both can be run manually from the Actions tab. If a genuine jump in shed counts
+Both can be run manually from the Actions tab. If a legitimate jump in shed counts
 trips the swing guard, re-run `refresh.yml` with `allow_swing` checked.
 
 ## The Socrata app token (optional, and probably unnecessary)

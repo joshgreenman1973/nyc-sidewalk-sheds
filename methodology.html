@@ -20,7 +20,7 @@
 </head>
 <body>
 <h1>Methodology</h1>
-<p class="lede">How this tracker is built, what its numbers mean, and where its blind spots are. The whole pipeline — from API to embed — is open source.</p>
+<p class="lede">How this tracker is built, what its numbers mean and where its blind spots are. The whole pipeline — from API to embed — is open source.</p>
 
 <h2>What counts as an "active" sidewalk shed</h2>
 <p>An active shed is any current Department of Buildings (DOB) sidewalk shed permit where:</p>
@@ -30,7 +30,7 @@
   <li>Permit expiration date is on or after today.</li>
 </ul>
 <p>Permits are filed and renewed under unique permit numbers, but the shed itself is a continuous physical structure tied to a building. We aggregate by Building Identification Number (BIN). Where multiple active permits exist for the same BIN we keep the most-recently-issued one for attribution but compute the start date from the full permit history at that building (see below).</p>
-<div class="caveat"><strong>Why our count is lower than DOB's dashboard.</strong> The Department of Buildings' own <a href="https://www.nyc.gov/site/buildings/about/sidewalk-shed-map.page">Active Sidewalk Shed Permits map</a> reports a higher number — about 7,520 on the day this was written, versus roughly 7,150 here. Both draw from the same DOB NOW permit data; the difference is what each counts as one shed. DOB counts <em>permit filings</em>: a building carrying two or three active shed filings at once is counted two or three times. We count <em>buildings</em>: one shedded building is one shed. On the same day the raw feed held 8,533 active permit rows, 7,516 distinct permit filings (matching DOB) and 7,151 distinct buildings (matching us). We use the building count because it answers the question most people are actually asking — how many buildings are living under a shed — and because it avoids double-counting a single physical structure.</div>
+<div class="caveat"><strong>Why our count is lower than DOB's dashboard.</strong> The Department of Buildings' own <a href="https://www.nyc.gov/site/buildings/about/sidewalk-shed-map.page">Active Sidewalk Shed Permits map</a> reports a higher number — about 7,520 on the day this was written, versus roughly 7,150 here. Both draw from the same DOB NOW permit data; the difference is what each counts as one shed. DOB counts <em>permit filings</em>: a building carrying two or three active shed filings at once is counted two or three times. We count <em>buildings</em>: one shedded building is one shed. On the same day the raw feed held 8,533 active permit rows, 7,516 distinct permit filings (matching DOB) and 7,151 distinct buildings (matching us). We use the building count because it answers how many buildings are under a shed, and because it avoids double-counting a single physical structure.</div>
 
 <h2>How "days up" is calculated</h2>
 <p>For each Building Identification Number (BIN) with an active shed permit, we pull every shed permit ever filed at that BIN from both DOB NOW (2018+) and the legacy DOB Permit Issuance dataset (1991–2020), sort by issuance date, and walk forward looking for a contiguous run.</p>
@@ -39,7 +39,7 @@
 <div class="caveat"><strong>Worked example.</strong> 409 Edgecombe Avenue (Manhattan) has had 23 legacy shed permits and three DOB NOW permits going back to 2002. Sorted by issuance, every renewal is within 30 days of the previous expiration <em>except</em> a 75-day gap between April and June 2004 and a 47-day gap in 2020 — splitting the building's permit history into three runs under the 30-day rule. The current run is reported as days-up; earlier runs are not. Under a 60-day rule, the 2020 gap would close and "days up" would jump to nearly 22 years.</div>
 
 <h2>Facade compliance (Local Law 11 / FISP)</h2>
-<p>For each shed-bearing building, we look up its most recent filing in DOB NOW: Facade Compliance Filings (<code>xubg-57si</code>) and report the <code>current_status</code>. NYC's FISP requires owners of buildings six stories or taller to inspect facades every five years and file one of:</p>
+<p>For each shed-bearing building, we look up its most recent filing in DOB NOW: Facade Compliance Filings (<code>xubg-57si</code>) and report the <code>current_status</code>. New York City's Facade Inspection Safety Program (FISP) requires owners of buildings six stories or taller to inspect facades every five years and file one of:</p>
 <ul>
   <li><strong>Unsafe.</strong> Facade poses a hazard. The shed is a documented requirement.</li>
   <li><strong>SWARMP</strong> (Safe With A Repair And Maintenance Program). Facade has issues that must be addressed by the next cycle.</li>
@@ -56,11 +56,11 @@
   <li>No DOB job filing for non-shed construction work has had a status update at the building in the last 365 days, and</li>
   <li>The building's most recent FISP filing is <em>not</em> Unsafe (an Unsafe filing means the shed is legally required).</li>
 </ul>
-<p>The intent is to surface sheds that are still up despite no documented hazard and no construction proceeding. This isn't perfect — work can be filed under a related building, or a facade may genuinely be deteriorating without an Unsafe filing — but it isolates the cases most worth a closer look.</p>
+<p>The intent is to surface sheds that are still up despite no documented hazard and no construction proceeding. This isn't perfect — work can be filed under a related building, or a facade may be deteriorating without an Unsafe filing — but it isolates the cases most worth a closer look.</p>
 
 <h2>Owner attribution</h2>
-<p>Owner names in popups come from PLUTO's <code>ownername</code> field, joined to the shed permit on Borough-Block-Lot (BBL). PLUTO records the owner of the tax lot, which is typically the building owner — not the scaffolding contractor that filed the shed permit. For roughly 1% of sheds the BBL doesn't match a current PLUTO record, and the popup falls back to the permit's stated owner.</p>
-<div class="caveat"><strong>Caveat.</strong> Many NYC buildings are owned by single-purpose LLCs whose names tell you nothing about the human or company behind them. Resolving those LLCs to beneficial owners requires HPD registrations and ACRIS deeds work that this tracker doesn't yet attempt.</div>
+<p>Owner names in popups come from the <code>ownername</code> field of PLUTO, the city's Primary Land Use Tax Lot Output file, joined to the shed permit on Borough-Block-Lot (BBL). PLUTO records the owner of the tax lot, which is typically the building owner — not the scaffolding contractor that filed the shed permit. For roughly 1% of sheds the BBL doesn't match a current PLUTO record, and the popup falls back to the permit's stated owner.</p>
+<div class="caveat"><strong>Caveat.</strong> Many New York City buildings are owned by single-purpose LLCs whose names tell you nothing about the human or company behind them. Resolving those LLCs to beneficial owners requires Department of Housing Preservation and Development (HPD) registrations and Automated City Register Information System (ACRIS) deeds work that this tracker doesn't yet attempt.</div>
 
 <h2>Data sources</h2>
 <ul>
@@ -72,9 +72,9 @@
 </ul>
 <p>All data is fetched from NYC Open Data's Socrata API. The build pipeline is <code>scripts/build_data.py</code> and runs nightly via GitHub Actions at 07:20 UTC. A second job checks daily that the published data is less than three days old and files an issue if it isn't.</p>
 
-<h2>How we keep the numbers honest</h2>
-<p>The build refuses to publish data that fails a set of sanity checks: shed counts outside a plausible range, coordinates outside the city, missing boroughs, duplicate buildings, contradictory flags, or a day-over-day swing greater than 35 percent. When a check fails, nothing is written and the previous data stays up. A stale number we can explain is better than a fresh one we can't.</p>
-<p>Those checks test the <em>derived</em> figures, not just the row counts, for a specific reason. This tracker's predecessor filtered DOB job filings on <code>shed='0'</code>. DOB later changed that field's encoding to <code>'YES'</code>/<code>'NO'</code>, so the filter matched nothing. Because zombie detection works by finding buildings <em>with</em> recent work, matching nothing meant every long-standing shed was flagged a zombie — roughly a fivefold overcount. The total shed count stayed perfectly correct throughout, so a check that only counted rows would never have caught it.</p>
+<h2>Validation checks</h2>
+<p>The build refuses to publish data that fails a set of sanity checks: shed counts outside a plausible range, coordinates outside the city, missing boroughs, duplicate buildings, contradictory flags or a day-over-day swing greater than 35 percent. When a check fails, nothing is written and the previous data stays up.</p>
+<p>Those checks test the <em>derived</em> figures as well as the row counts. This tracker's predecessor filtered DOB job filings on <code>shed='0'</code>. DOB later changed that field's encoding to <code>'YES'</code>/<code>'NO'</code>, so the filter matched nothing. Because zombie detection works by finding buildings <em>with</em> recent work, matching nothing meant every long-standing shed was flagged a zombie — roughly a fivefold overcount. The total shed count stayed correct throughout, so a check that only counted rows would never have caught it.</p>
 <p>If you are comparing against the earlier version of this map: its data stopped updating on April 27, 2026, so its figures are stale rather than wrong. Its final zombie count (447) is consistent with what this build produces today (432), which tells us the encoding change landed after that data froze — the freeze is what kept the bug from showing up there.</p>
 
 <h2>What this tracker does <em>not</em> do</h2>

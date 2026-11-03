@@ -442,7 +442,7 @@
   const PRESETS = {
     'zombies': {
       label: 'Why is this still up?',
-      desc: '<strong>Zombie sheds.</strong> Up over a year, no recent non-shed work, and no documented unsafe-facade filing — the strongest signal of a shed sitting there for no defensible reason.',
+      desc: '<strong>Zombie sheds.</strong> Up over a year, no recent non-shed work, and no documented unsafe-facade filing.',
       apply: () => {
         clearAllFilters();
         document.getElementById('f-zombie').checked = true;
@@ -450,12 +450,12 @@
     },
     'safe-shedded': {
       label: 'Safe but still shedded',
-      desc: '<strong>Sheds at buildings the city has rated SAFE</strong> in their most recent Local Law 11 facade filing. The facade is certified fine — yet the sidewalk shed is still up.',
+      desc: '<strong>Sheds at buildings the city has rated SAFE</strong> in their most recent Local Law 11 facade filing. The facade is certified fine, and the sidewalk shed is still up.',
       apply: () => { clearAllFilters(); state.fisp.add('SAFE'); },
     },
     'distressed-long': {
       label: 'Distressed buildings, sheds >5 years',
-      desc: '<strong>Long-standing sheds at distressed buildings.</strong> Five-plus years of permit coverage at buildings with substantial open HPD violations or AEP enrollment. The shed is the visible symptom of a deeper problem.',
+      desc: '<strong>Long-standing sheds at distressed buildings.</strong> Five-plus years of permit coverage at buildings with substantial open HPD violations or AEP enrollment.',
       apply: () => {
         clearAllFilters();
         state.flags.add('distress');
@@ -464,7 +464,7 @@
     },
     'chronic': {
       label: 'Where complaints repeat',
-      desc: '<strong>Chronic 311 sites.</strong> Locations with two or more scaffold-safety complaints in the past 12 months — the addresses where neighbors keep flagging the same problem.',
+      desc: '<strong>Chronic 311 sites.</strong> Locations with two or more scaffold-safety complaints in the past 12 months.',
       apply: () => {
         clearAllFilters();
         document.getElementById('f-311').checked = true;
@@ -719,7 +719,7 @@
       kind: 'severe',
       num: fmt(s.over_10y || 0),
       head: 'Buildings with continuous shed-permit coverage over 10 years',
-      body: `These buildings have had a sidewalk-shed permit on file with no gap longer than 30 days for more than a decade. The single longest run is at <strong>${longest.addr}</strong>, ${longest.boro}, since <strong>${longest.first}</strong> (${(longest.days / 365).toFixed(1)} years). Whether a single physical structure has stood the entire time is not certified by the data — but the building has been under shed nearly without interruption.`,
+      body: `These buildings have had a sidewalk-shed permit on file with no gap longer than 30 days for more than a decade. The longest run is at <strong>${longest.addr}</strong>, ${longest.boro}, since <strong>${longest.first}</strong> (${(longest.days / 365).toFixed(1)} years). Whether a single physical structure has stood the entire time is not certified by the data — but the building has been under shed nearly without interruption.`,
       cta: 'Filter map to over-5-years →',
       action: () => { state.buckets.add('1825-99999'); switchView('map'); syncLegend(); applyFilters(); },
     });
@@ -754,7 +754,7 @@
       kind: 'severe',
       num: fmt(s.fisp_safe || 0),
       head: 'Sheds at buildings the city has rated Safe',
-      body: `These buildings filed a facade-compliance report saying the facade is <strong>safe</strong> — yet the sidewalk shed is still up. A subset deserves direct scrutiny.`,
+      body: `These buildings filed a facade-compliance report saying the facade is <strong>safe</strong>, and the sidewalk shed is still up.`,
       cta: 'Filter map →',
       action: () => { state.fisp.add('SAFE'); switchView('map'); syncLegend(); applyFilters(); },
     });
@@ -764,7 +764,7 @@
       kind: 'severe',
       num: fmt(s.zombies || 0),
       head: 'Zombie sheds: long up, no work, no documented hazard',
-      body: `Sheds up over a year, with no recent non-shed construction filed at the building, and no Unsafe ${ab('FISP')} filing. Strongest signal of a shed that's just sitting there.`,
+      body: `Sheds up over a year, with no recent non-shed construction filed at the building, and no Unsafe ${ab('FISP')} filing.`,
       cta: 'Filter map →',
       action: () => { document.getElementById('f-zombie').checked = true; switchView('map'); syncLegend(); applyFilters(); },
     });
@@ -774,7 +774,7 @@
       kind: 'severe',
       num: fmt(s.with_open_class_c || 0),
       head: 'Sheds at buildings with hazardous housing violations',
-      body: `About <strong>${Math.round(100 * (s.with_open_class_c || 0) / (s.total_active || 1))} percent</strong> of shed-bearing buildings have at least one open Class C — immediately hazardous — housing violation on file with ${ab('HPD')}. The shed is often the most visible symptom of a deeper problem.`,
+      body: `About <strong>${Math.round(100 * (s.with_open_class_c || 0) / (s.total_active || 1))} percent</strong> of shed-bearing buildings have at least one open Class C — immediately hazardous — housing violation on file with ${ab('HPD')}.`,
       cta: 'Filter map to distressed →',
       action: () => { state.flags.add('distress'); switchView('map'); syncLegend(); applyFilters(); },
     });
@@ -784,7 +784,7 @@
       kind: 'context',
       num: fmt(s.in_aep),
       head: `Sheds at ${ab('HPD')} ${ab('AEP')}-enrolled buildings`,
-      body: `These buildings are formally enrolled in ${ab('HPD')}'s Alternative Enforcement Program — the city's official list of severely distressed properties. Each shed there is a public-housing-quality emergency in slow motion.`,
+      body: `These buildings are formally enrolled in ${ab('HPD')}'s Alternative Enforcement Program — the city's official list of severely distressed properties.`,
       cta: 'Filter map →',
       action: () => { state.flags.add('aep'); switchView('map'); syncLegend(); applyFilters(); },
     });
@@ -811,7 +811,7 @@
       kind: 'context',
       num: fmt(cdTop.sheds),
       head: 'Most shed-burdened community district',
-      body: `The single CD with the most active sheds. The top three districts together hold about <strong>${Math.round(100 * (state.cd.slice(0,3).reduce((a,c)=>a+c.sheds,0)) / (s.total_active || 1))} percent</strong> of all citywide sheds.`,
+      body: `The community district with the most active sheds. The top three districts together hold about <strong>${Math.round(100 * (state.cd.slice(0,3).reduce((a,c)=>a+c.sheds,0)) / (s.total_active || 1))} percent</strong> of all citywide sheds.`,
       cta: 'See ranking →',
       action: () => switchView('neighborhoods'),
     });
