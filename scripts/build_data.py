@@ -179,25 +179,44 @@ def main() -> int:
     ):
         pluto[str(row.get("bbl")).split(".")[0]] = row
 
-    # 5. HPD open B/C violations, aggregated citywide then indexed by BBL.
+    # 5. HPD open B/C violations, counted per lot for just the blocks we need.
+    # This used to be one citywide GROUP BY over every open B/C violation. By
+    # November 2026 Socrata could no longer finish that aggregation inside a
+    # 5-minute read, so the nightly run died here. Asking per borough for the
+    # blocks that hold an active shed returns the same per-lot counts in seconds.
+    # The filter is on boroid/block (not HPD's own bbl column) because a few
+    # thousand open violations have boroid/block/lot filled in but bbl blank,
+    # and the old query counted those.
     log("[5/8] HPD open class B/C violations...")
     hpd_open = defaultdict(lambda: {"b": 0, "c": 0})
-    for cls in ("B", "C"):
-        rows = socrata.fetch_json(
-            socrata.build_url(
-                "wvxf-dwi5", select="boroid,block,lot,count(*) as cnt",
-                where=f"violationstatus='Open' AND class='{cls}'",
-                group="boroid,block,lot", limit=250000,
-            ),
-            what=f"HPD class {cls}",
-        )
-        for row in rows:
-            try:
-                bbl = f"{row['boroid']}{str(int(row['block'])).zfill(5)}{str(int(row['lot'])).zfill(4)}"
-            except Exception:
-                continue
-            hpd_open[bbl][cls.lower()] += int(row["cnt"])
-        log(f"  class {cls}: {len(rows):,} BBLs")
+    blocks_by_boro = defaultdict(set)
+    for bbl in active_bbls:
+        if len(bbl) == 10 and bbl.isdigit():
+            blocks_by_boro[bbl[0]].add(int(bbl[1:6]))
+    hpd_groups = 0
+    for boro in sorted(blocks_by_boro):
+        blocks = sorted(blocks_by_boro[boro])
+        for i in range(0, len(blocks), 300):
+            batch = blocks[i : i + 300]
+            rows = socrata.fetch_json(
+                socrata.build_url(
+                    "wvxf-dwi5", select="boroid,block,lot,class,count(*) as cnt",
+                    where=(f"violationstatus='Open' AND class in('B','C') AND boroid={int(boro)} "
+                           f"AND block in({','.join(str(b) for b in batch)})"),
+                    group="boroid,block,lot,class", limit=50000,
+                ),
+                what=f"HPD boro {boro} blocks [{i}-{i+len(batch)}]",
+            )
+            if len(rows) >= 50000:
+                raise socrata.SocrataError(f"HPD boro {boro} blocks [{i}-{i+len(batch)}]: hit the 50,000-row limit; counts would be truncated")
+            for row in rows:
+                try:
+                    bbl = f"{row['boroid']}{str(int(row['block'])).zfill(5)}{str(int(row['lot'])).zfill(4)}"
+                except Exception:
+                    continue
+                hpd_open[bbl][row["class"].lower()] += int(row["cnt"])
+            hpd_groups += len(rows)
+    log(f"  HPD: {hpd_groups:,} lot/class groups on {sum(len(b) for b in blocks_by_boro.values()):,} blocks")
 
     # 6. HPD Alternative Enforcement Program (distressed buildings).
     log("[6/8] HPD AEP list...")
